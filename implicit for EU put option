@@ -1,0 +1,58 @@
+clear all
+clc
+
+S=50;
+r=10/100;
+sigma=30/100;
+X=50;
+T=5/12;
+Szero=0;
+
+Smax=160;
+dS=1;
+M=Smax/dS;
+
+dt=5/1200;
+N=T/dt;
+
+j=0:M;
+solngrid=zeros(M+1,N+1);
+Sgrid=0:dS:Smax;
+
+Tgrid=T:-dt:0;
+
+solngrid(1,:)=X*exp(-r*Tgrid);
+solngrid(:,end)=max(X-Sgrid,0);
+solngrid(end,:)=0;
+
+alpha=(1/2)*dt*(r*j-sigma^2*j.^2);
+beta=1+(sigma^2*j.^2+r)*dt;
+gamma=(-1/2)*dt*(r*j+sigma^2*j.^2);
+
+%matrix construction
+A=diag(alpha(3:M),-1)+diag(beta(2:M))+diag(gamma(2:M-1),1);
+% Ainv=inv(A);
+% normi=norm(Ainv,inf);
+C=zeros(size(A,2),1);
+
+for i=N:-1:1
+    C(1)=alpha(2)*solngrid(1,i);
+    C(end)=gamma(end)*solngrid(end,i);
+    
+    solngrid(2:M,i)=A\(solngrid(2:M,i+1)-C);
+end
+EuropPut=interp1(Sgrid,solngrid(:,1),S)
+
+
+ Put=zeros(0,M);
+ Call=zeros(0,M);
+ Price=(0:dS:160);
+ for a=0:1:160
+[Call(a+1),  Put(a+1)]=blsprice(Price(a+1),X,r,T,sigma);
+ end
+ Put(1)=X*exp(-r*T);
+ solngrid(1,1)=X*exp(-r*T);
+ plot (dS*(0:M),solngrid(:,1));
+  hold on
+  %plot([0,E],[E,0]);
+plot(dS*(0:M),Put);
