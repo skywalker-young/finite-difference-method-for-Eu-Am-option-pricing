@@ -1,0 +1,56 @@
+X=50;
+S0=50;
+r=0.1;
+sig=30/100;
+Svec=0:1:100;
+tvec=0:0.0001:5/12; 
+
+M = length(Svec)-1;
+N = length(tvec)-1;
+dt = tvec(2)-tvec(1);
+ds=1;
+% Calculate the coefficients
+% To do this we need a vector of j points
+j = 0:M;
+sig2 = sig*sig;
+aj = (dt/4)*(sig2*(j.^2) - r*j);
+bj = -(dt/2)*(sig2*(j.^2) + r);
+cj = (dt/4)*(sig2*(j.^2) + r*j);
+
+% Pre-allocate the output
+price(1:M+1,1:N+1) = nan;
+price(:,end) = max(X-Svec,0);
+price(1,:) = (X-Svec(1))*exp(-r*tvec(end:-1:1));
+price(end,:) = 0;
+
+% Form the tridiagonal matrix
+C = -diag(aj(3:M),-1) + diag(1-bj(2:M)) - diag(cj(2:M-1),1);
+[L,U] = lu(C);
+D = diag(aj(3:M),-1) + diag(1+bj(2:M)) + diag(cj(2:M-1),1);
+
+% Solve at each node
+offset = zeros(size(D,2),1);
+for idx = N:-1:1
+%     if length(offset)==1
+%         offset = aj(2)*(price(1,idx)+price(1,idx+1)) + ...
+%             cj(end)*(price(end,idx)+price(end,idx+1));
+%     else
+        offset(1) = aj(2)*(price(1,idx)+price(1,idx+1));
+        offset(end) = cj(end)*(price(end,idx)+price(end,idx+1));
+  %  end
+    price(2:M,idx) = U\(L\(D*price(2:M,idx+1) + offset));
+end
+CNmethod = interp1(Svec,price(:,1),S0)
+
+ Put=zeros(0,M);
+ Call=zeros(0,M);
+ Price=(0:1:100);
+ for a=0:1:100
+[Call(a+1),  Put(a+1)]=blsprice(Price(a+1),50,0.1,5/12,0.3);
+ end
+ Put(1)=X*exp(-r*5/12);
+ price(1,1)=X*exp(-r*5/12);
+  plot (ds*(0:M),price(:,1));
+  hold on
+  %plot([0,E],[E,0]);
+ plot(ds*(0:M),Put);
