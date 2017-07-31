@@ -1,0 +1,35 @@
+clear
+S0=50;K=50;T=5/12;sigma=0.4;r=0.1;
+Smax=100;ds=0.5;dt=T/200;
+M=round(Smax/ds);
+ds=Smax/M;
+N=round(T/dt);
+dt=T/N;
+
+Matrix=zeros(M+1,N+1);
+Matrix(:,N+1)=max(linspace(0,Smax,M+1)-K,0);
+Matrix(1,:)=0;
+Matrix(M+1,:)=(Smax-K)*exp(-r*dt*(N-(0:N)));
+utemp=max(linspace(0,Smax,M+1)-K,0);
+utemp=utemp(2:M)';
+i=0:N;
+j=0:M;
+a=0.5*(r*dt*j-sigma^2*dt*j.^2);
+b=1+sigma^2*dt*j.^2+r*dt;
+c=-0.5*(r*dt*j+sigma^2*dt*j.^2);
+L=diag(a(3:M),-1)+diag(b(2:M))+diag(c(2:M-1),1);
+
+for loop=N:-1:1
+    temp=zeros(M-1,1);
+    temp(1)=a(2)*Matrix(1,loop+1);
+    temp(M-1)=c(M)*Matrix(M+1,loop+1);
+    qtemp=inv(L)*(Matrix(2:M,loop+1)-temp);
+    indx=find(qtemp<utemp);
+    qtemp(indx)=utemp(indx);
+    Matrix(2:M,loop)=qtemp;
+end
+plot(linspace(0,Smax,M+1),Matrix(:,1))
+hold on
+  
+  plot([K,Smax],[0,Smax-K])
+%plot(linspace(0,Smax,M+1),max(linspace(0,Smax,M+1)-K,0));
