@@ -1,0 +1,143 @@
+clear;
+clc;
+M=12;
+S=50;sigma=0.1;r=0.05;T=1;
+%N=4;
+dt=T/M;
+K=50;
+A=0.5*(exp(-r*dt)+exp((r+sigma^2)*dt));
+ds=1;
+u=A+sqrt(A^2-1);
+d=1/u;
+p=(exp(r*dt)-d)/(u-d);
+discount=exp(-r*dt);
+% node=0;
+% for i=1:1:N
+%    temp=i+1;
+%     node=temp+node;
+%      
+% end
+% S=zeros(1,node+1);
+% S(1)=50;
+% for j=2:N+1
+%     for i=1:j
+%         S(i,j)=S(1,1)*u^(j-i)*d^(i-1);
+%     end
+% end
+storeinivalue=zeros(1,161);
+duedayvalue=zeros(1,M+1);
+P=zeros(M+1,M+1); 
+for ini=0:1:160
+  P(1,1)=ds*ini;                       %P(1,1)=50;           %这里开始变化，初始价格变化
+for node = 2:M+1
+    P(1:node-1,node) = P(1:node-1,node-1)*u;%%%%%%%calculat node
+    P(node,node) = P(node-1,node-1)*d;
+end
+
+
+for i=1:M+1
+    duedayvalue(1,i)=P(i,M+1);
+end
+
+%payoff eu put
+for i=1:M+1
+ P(i,M+1)=max(K-duedayvalue(1,i),0);
+end
+
+ for j=M:-1:1
+    for i=1:1:j
+        P(i,j)=discount*(p*P(i,j+1)+(1-p)*P(i+1,j+1));
+    end
+ end
+ storeinivalue(1,ini+1)=P(1,1);
+end
+%P(1,1)
+ 
+%  [AssetPrice,OptionValue]=binprice(S,K,r,T,1/12,sigma,0);
+% OptionValue
+%P(1,12)=discount*(u*P(1,13)+d*P(2,13))
+ Put=zeros(0,M);
+ Call=zeros(0,M);
+ Price=(0:ds:160);
+ for a=0:1:160
+[Call(a+1),  Put(a+1)]=blsprice(Price(a+1),K,r,T,sigma);
+ end
+ Put(1)= K*exp(-r*T);
+ P(1,1)=  K*exp(-r*T);
+% solngrid(161,1)=160-50;
+  plot (ds*(0:160),storeinivalue(1,:));
+  hold on
+  %plot([0,E],[E,0]);
+ plot(ds*(0:160),Put);
+
+legend('binomial tree method'   , 'Black-Scholes put price')
+ xlabel('underlying asset price')
+ylabel('Put option value')
+title('d=1/u')
+########################################3
+####################################
+##############################
+clear;
+clc;
+M=12;
+S=50;sigma=0.1;r=0.05;T=1;
+%N=4;
+dt=T/M;
+ds=1;
+K=50;
+A=0.5*(exp(-r*dt)+exp((r+sigma^2)*dt));
+
+u=A+sqrt(A^2-1);
+d=1/u;
+p=(exp(r*dt)-d)/(u-d);
+discount=exp(-r*dt);
+% node=0;
+% for i=1:1:N
+%    temp=i+1;
+%     node=temp+node;
+%      
+% end
+% S=zeros(1,node+1);
+% S(1)=50;
+% for j=2:N+1
+%     for i=1:j
+%         S(i,j)=S(1,1)*u^(j-i)*d^(i-1);
+%     end
+% end
+storeinivalue=zeros(1,161);
+duedayvalue=zeros(1,M+1);
+P=zeros(M+1,M+1);
+
+for ini=0:1:160
+P(1,1)=ds*ini;
+for node = 2:M+1
+    P(1:node-1,node) = P(1:node-1,node-1)*u;%%%%%%%calculat node
+    P(node,node) = P(node-1,node-1)*d;
+end
+
+
+for i=1:M+1
+    duedayvalue(1,i)=P(i,M+1);
+end
+
+%payoff am call
+for i=1:M+1
+ P(i,M+1)=max(duedayvalue(1,i)-K,0);
+end
+
+ for j=M:-1:1
+    for i=1:1:j
+        P(i,j)=max(max(P(i,j)-K,0),discount*(p*P(i,j+1)+(1-p)*P(i+1,j+1)));
+    end
+end
+storeinivalue(1,ini+1)=P(1,1);
+end
+ 
+ plot (ds*(0:160),storeinivalue(1,:));
+  hold on
+plot([K,160],[0,110]);
+
+ legend('binomial tree method'   , 'payoff line')
+ xlabel('underlying asset price')
+ylabel('Call option value')
+title('d=1/u')
