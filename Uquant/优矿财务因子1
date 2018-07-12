@@ -1,0 +1,99 @@
+##财务因子，revenue,获取后寻找同比增大和环比增大
+#电子板块 603890
+#a=DataAPI.EquIndustryGet(secID=u"603890.XSHG",field=['secID','secShortName','industryName1','industryID1','industryName2','industryID2'],pandas="1")
+#print(a)#industryID1 01030312
+
+pool=DataAPI.EquIndustryGet(industry=u"申万行业",industryID1=u"01030312",pandas="1")
+ 
+pool={}.fromkeys(pool.secID).keys()
+long=len(pool) #274
+ 
+tmp2=[]
+missing_data_company=[]
+for i in range(long):
+    name=pool[i]
+    a=DataAPI.FdmtISInduAllLatestGet(secID=name,reportType=u"Q1",endDate=u"20180401",beginDate=u"20160301",pandas="1")
+    if(len(a.revenue)!=3):
+        tmp2.append(i)
+        missing_data_company.append(name)
+ 
+count=0
+for i in range(len(tmp2)):
+    pool.pop(tmp2[i]-count)
+    count=count+1
+#print(len(tmp2))#29
+q1=[]
+q2=[]
+q3=[]
+q4=[]
+half=[]
+year=[]
+tt=[] 
+    
+for i in pool:
+        a=DataAPI.FdmtISInduAllLatestGet (secID=i,reportType=u"Q1",endDate=u"20180401",beginDate=u"20160301",pandas="1")
+        #print(a.revenue)
+        q1.append(a.revenue)
+        b=DataAPI.FdmtISInduAllLatestGet (secID=i,reportType=u"Q3",endDate=u"20171231",beginDate=u"20160101",pandas="1")
+        q3.append(b.revenue)
+        c=DataAPI.FdmtISInduAllLatestGet(secID=i,reportType=u"S1",endDate=u"20171231",beginDate=u"20160601",pandas="1")
+        half.append(c.revenue)
+        d=DataAPI.FdmtISInduAllLatestGet(secID=i,reportType=u"A",endDate=u"20180101",beginDate=u"20160601",pandas="1")
+        year.append(d.revenue)
+        t=DataAPI.FdmtISInduAllLatestGet(secID=i,reportType=u"Q1",endDate=u"20171231",beginDate=u"20160301",pandas="1")
+        tt.append(t.revenue)    
+
+q1=np.array(q1) 
+tt=np.array(tt)
+half=np.array(half)
+year=np.array(year)
+
+q2=half-tt
+
+q3=pd.DataFrame(q3)
+q3=np.array(q3)
+q4=year-half-q3
+
+print(q1)
+print(q2)
+print(q3)
+print(q4)
+search=len(q1) 
+ 
+cal=[[]]*search
+for i in range(search):
+    for j in range(2):
+         
+            cal[i]+=[q1[i] [j]]
+     
+            cal[i] += [q4[i] [j]]
+     
+            cal[i] += [q3[i] [j]]
+     
+            cal[i] += [q2[i] [j]]
+    
+#print(cal[0] )
+log1=[0]*search
+log2=[]
+#print(len(cal))#27  环比
+for i in range(search):
+    if(cal[i]==sorted(cal[i],reverse=True)):
+        log[i]=tmp[i]
+        
+#print(cal[0]==sorted(cal[0],reverse=True)) 
+#print(cal[1]==sorted(cal[1],reverse=True)) 
+print(np.array(log1))
+###############同比
+for i in range(search):
+    for j in range(1):
+         t1=q1[i][j]
+         t2=q1[i][j+1]   
+         t3=q2[i][j]
+         t4=q2[i][j+1]
+         t5=q3[i][j]
+         t6=q3[i][j+1]
+         t7=q4[i][j]
+         t8=q4[i][j+1]
+         if(t1>=t2 and t3>=t4 and t5>=t6 and t7>=t8):
+                log2.append(pool[i])
+print(np.array(log2))
