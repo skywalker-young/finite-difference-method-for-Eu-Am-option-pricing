@@ -1,0 +1,23 @@
+####很重要的功能函数草稿
+start = '2017-01-01'                      # 回测起始时间
+end = '2017-01-31'                         # 回测结束时间
+universe = ['000001.ZICN']        # 证券池，支持股票、基金、期货、指数四种资产
+benchmark = 'HS300'                        # 策略参考标准
+freq = 'd'                                 # 策略类型，'d’表示日间策略使用日线回测，'m’表示日内策略使用分钟线回测
+refresh_rate = 1                           # 调仓频率，表示执行handle_data的时间间隔，若freq = 'd’时间间隔的单位为交易日，若freq = 'm’时间间隔为分钟
+accounts = {
+'fantasy_account': AccountConfig(account_type='index', capital_base=10000000)
+}
+def initialize(context):
+    pass
+def handle_data(context):
+
+    previous_date = context.previous_date.strftime('%Y-%m-%d')
+# 获取当前账户信息
+    account = context.get_account('fantasy_account')
+
+    current_position = account.get_positions()
+    account.order('000001.ZICN', -100, 'open')
+    a = current_position.get('000001.ZICN', None)
+    if a is not None:
+       print a.short_amount
