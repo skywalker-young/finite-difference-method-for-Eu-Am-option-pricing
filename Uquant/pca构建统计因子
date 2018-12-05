@@ -1,0 +1,47 @@
+#PCA on a portfolio
+pool=['300059.SZ','002797.SZ','002670.SZ','600061.SH','601066.SH','601108.SH']
+delta={'pct_change':[]}
+
+# for i in pool:
+#     tmp=get_price( pool, '20181101' , '20181204', '1d', ['quote_rate'])
+#     delta.get()
+    
+tmp=    get_price( pool, '20181101' , '20181204', '1d', ['quote_rate'],is_panel=1) 
+
+data=pd.DataFrame(tmp['quote_rate'] )
+#print( data)
+
+from sklearn.decomposition import PCA
+num_pc=2
+
+data=np.asarray(data)  #data==X
+[n,m]=data.shape
+#print(n,m)#n=24 m=6; 24天，6只股票
+pca=PCA(n_components=num_pc)
+pca.fit(data)
+
+percentage=pca.explained_variance_ratio_
+percentage_cum=np.cumsum(percentage)
+pca_components=pca.components_
+print('{0:.2f}% 的方差是由前2个大的主要成分解释的'.format(percentage_cum[-1]*100))
+factor_returns=data.dot(pca_components.T)
+factor_returns=pd.DataFrame(columns=["factor 1","factor 2" ],index= tmp['quote_rate'].index,data=factor_returns)
+print( factor_returns)
+factor_exposures=pd.DataFrame(index=["factor 1","factor 2"],columns=tmp['quote_rate'].columns,data=pca.components_).T
+print(factor_exposures)
+
+labels=factor_exposures.index
+ddd=factor_exposures.values
+plt.figure(figsize=(10,10))
+plt.grid(True)
+plt.subplots_adjust(bottom=0.1)
+plt.scatter(ddd[:,0],ddd[:,1],marker='o',s=300,c='m',cmap=plt.get_cmap('spectral'))
+plt.xlabel('factor exposure of pc1')
+plt.ylabel('factor exposure of pc2')
+
+for label,x,y in zip (labels,ddd[:,0],ddd[:,1]):
+    plt.annotate(label,xy=(x,y),xytext=(-20,20),textcoords='offset points',ha='right',va='bottom',\
+                 bbox=dict(boxstyle='round,pad=0.5',fc='yellow',alpha=0.5),\
+                 arrowprops=dict(arrowstyle='->', connectionstyle="arc3,rad=.2"))
+                  
+               
