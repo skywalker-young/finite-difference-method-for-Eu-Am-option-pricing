@@ -1,0 +1,95 @@
+####
+#今天悲剧地大跌了，虽然上午10：55am有收红的可能，但是主力资金应该会调整方向炒别的股票
+#寻找成交量放大的个股去
+###
+from CAL.PyCAL import *
+cal = Calendar('China.SSE')
+import pandas as pd
+import numpy as np
+data=DataAPI.EquGet(secID=u"",ticker=u"",equTypeCD=u"A",listStatusCD=u"L",field=u"",pandas="1")
+pool=data.secID
+#print(len(pool))
+def univClear(univ,date):
+    # 1. 去除停牌股票
+    #univ = [s for s in univ if s in account.universe]
+    # 2. 去除ST股
+    #f_ST = DataAPI.SecSTGet(secID=univ, beginDate=date, endDate=date, field=['secID'])
+    #niv = [s for s in univ if s not in list(df_ST['secID'])]
+    df_ST = DataAPI.EquGet(secID=univ,field=u"secID,secShortName",pandas="1")
+    STlist = list(df_ST.loc[df_ST.secShortName.str.contains('S'), 'secID'])
+    New=[]
+    univ = [s for s in univ if s not in STlist]
+    for i in univ:
+        a=DataAPI.MktEqudGet(secID=i,ticker=u"",tradeDate=date,beginDate=u"",endDate=u"",isOpen="",field=u"",pandas="1")
+        if len(a)==0:
+            New.append(i)
+    univ = [s for s in univ if s not in New]
+    return univ
+
+date="20190313"
+pool=univClear(pool,date)
+
+ 
+
+def early(a,n):
+    for i in range(int(n)):
+        a = cal.advanceDate(a, '-1b', BizDayConvention.Preceding)
+    return a
+# def handleVol(data,N):
+#     vol=data['turnoverVol']
+#     length=len(vol)
+#     tmp=[0]*N
+#     rank=[]
+#     for i in range(length-N):
+#         tmp=[np.log(j)for j in vol[i:i+N]]
+    
+#         tmp=[round(i,4) for i in tmp]
+    
+#         v=tmp[N-1]
+#         tmp.sort()
+#         tmp=list(tmp)
+#         n=tmp.index(v)
+#         rank.append((n-0)*1.0/N) 
+#     return rank
+#距离baseDate那天指数涨跌幅情况大于m%，targetDate在前二十个交易日成交量排名前n，
+
+def filter( index,baseDate,targetDate,m,n):
+    tmp1=DataAPI.MktIdxdGet(indexID=index,ticker=u"",tradeDate=u"",beginDate=baseDate,endDate=targetDate,exchangeCD=u"XSHE,XSHG",\
+                            field=u"",pandas="1")
+    tmp1=tmp1.closeIndex
+    
+    sharesInfo={'sharesVol':[],'sharesPct':[],'sharesID':[]}
+    IndexPct=(tmp1[len(tmp1)-1]-tmp1[0])/tmp1[0]
+    IndexPct=round(IndexPct,4)
+    
+    for i in pool:
+        sharesInfo.get('sharesID').append(i)
+        shares=DataAPI.MktEqudGet(secID=i,ticker=u"",tradeDate=u"",beginDate=baseDate,endDate=targetDate,isOpen="",field=u"",pandas="1")
+        tmp2=shares.closePrice
+        #print(i)       
+        tmpPct=(tmp2[len(tmp2)-1]-tmp2[0])/tmp2[0]
+        tmpPct=round(tmpPct,4)
+        if tmpPct>m:
+            sharesInfo.get('sharesPct').append(1)
+        else:
+            sharesInfo.get('sharesPct').append(0)
+        tmp3=DataAPI.MktEqudGet(secID=i,ticker=u"",tradeDate=u"",beginDate=early(targetDate,20),endDate=targetDate,isOpen="",field=u"",pandas="1")
+        vol=tmp3.turnoverVol
+        vol=[np.log(j)for j in vol]
+        vol=[round(i,4) for i in vol]
+        v=vol[len(vol)-1]#target 当天
+        vol.sort()
+        vol=list(vol)
+        
+        if vol.index(v)>=n:
+            sharesInfo.get('sharesVol').append(1)
+        else:
+            sharesInfo.get('sharesVol').append(0)
+    sharesInfo=pd.DataFrame(sharesInfo)
+    return sharesInfo
+        
+close=filter("000001.ZICN","2019-03-12","2019-03-13",-0.03,18)
+
+WeNeed=(close[(close['sharesPct']==1) & (close['sharesVol']==1)])
+WeNeed.to_csv('WeNeed.csv')
+print(len(WeNeed))
