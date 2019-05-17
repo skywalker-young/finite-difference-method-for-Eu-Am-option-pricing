@@ -1,0 +1,75 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from CAL.PyCAL import *
+import datetime
+from math import floor
+
+cal = Calendar('China.SSE') 
+
+# BeginDate='20190516' 
+FinalDate='20190516' #只看这一天的情况
+
+def universeFilter( end):
+    info=['secID','listDate','secShortName']
+    data=DataAPI.EquGet(secID=u"",ticker=u"",equTypeCD=u"A",listStatusCD=u"L",field=info,pandas="1")
+    data2=DataAPI.SecSTGet(beginDate=end,endDate=end,secID=u"",ticker=u"",field=['secID'],pandas="1")
+    BDate=cal.advanceDate(end, Period('-100B')).toDateTime() #过滤上市不足100日的新股
+        
+    tmp=list(data['secID'])
+    ST=list(data2['secID'])
+    out1=[j for j in tmp if j not in ST]  #过滤ST股
+    data=data.loc[data['listDate']>=BDate.strftime('%Y-%m-%d')]
+    NEW=list(data['secID'])
+    out2=[x for x in out1 if x not in NEW] 
+    print('out2',len(out2))
+    return   out2
+
+#新股过滤完后，按照流通市值分成5类，小，中，大，超巨，分别统计当日涨跌幅和涨跌幅区间个数。
+#LFLO 对数流通市值
+
+def categorySmall(pool,end):
+    x=[0]*5
+    info=['secID','LFLO']
+    tmp={'secID':[],'LFLO':[]}
+    for i in pool:
+        data=DataAPI.MktStockFactorsOneDayGet(tradeDate=end,secID=i,ticker=u"",field=info,pandas="1")
+        tmp.get('secID').append(i)
+        tmp.get('LFLO').append(data['LFLO'][0])
+    tmp=pd.DataFrame(tmp)
+    tmp=tmp.sort_values(by=['LFLO'],ascending=[True])
+    tmp=tmp.reset_index(drop=True)
+    long=len(tmp)
+    ss=int(floor(long*0.2))
+    small=tmp[:ss]
+    
+    mm=int(floor(long*0.4))
+    medium=tmp[ss:mm]
+    bb=int(floor(long*0.6))
+    big=tmp[mm:bb]
+    large=int(floor(long*0.8))
+    blue=tmp[bb:large]
+    supernova=tmp[large:]
+    x[0]=small
+    x[1]=medium
+    x[2]=big
+    x[3]=blue
+    x[4]=supernova
+    return x
+
+universe=universeFilter(FinalDate)
+
+pool=categorySmall(universe,FinalDate)
+print(len(pool))#5
+print(len(pool[0]))#684
+small=pool[0]
+medium=pool[1]
+big=pool[2]
+blue=pool[3]
+supernova=pool[4]
+#resultSmall=getDetail(small)
+small=(small.secID).to_csv('small.csv',index=False)
+medium=medium.secID.to_csv('medium.csv',index=False)
+big=big.secID.to_csv('big.csv',index=False)
+blue=blue.secID.to_csv('blue.csv',index=False)
+supernova=supernova.secID.to_csv('supernpva.csv',index=False)
