@@ -1,0 +1,90 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
+
+small=pd.read_csv('small.csv',header=None )
+small=small.rename(columns={0:'secID'} )
+ 
+medium=pd.read_csv('medium.csv',header=None )
+medium=medium.rename(columns={0:'secID'})
+
+big=pd.read_csv('big.csv',header=None)
+big=big.rename(columns={0:'secID'})
+
+blue=pd.read_csv('blue.csv',header=None)
+blue=blue.rename(columns={0:'secID'})
+
+supernova=pd.read_csv('supernpva.csv',header=None)
+supernova=supernova.rename(columns={0:'secID'})
+
+def getDetail(universe,end):
+    info=['secID' ,'chgPct']
+    data=DataAPI.MktEqudGet(secID=universe,ticker=u"",tradeDate=end,beginDate=u"",endDate=u"",\
+                   isOpen="",field=info,pandas="1")
+    #print(data)
+    labelname=['-0.1','-0.09','-0.08','-0.07','-0.06','-0.05','-0.04','-0.03','-0.02',\
+                '-0.01','0','0.01','0.02','0.03','0.04','0.05','0.06','0.07','0.08','0.09']
+    bins =np.arange(-0.10,0.11,0.01)
+    data['range'] =pd.cut(data.chgPct,bins  ,labels=ll,right=False)#左闭又开
+    dataSummary=pd.DataFrame(data.range.value_counts( ))
+    dataSummary=dataSummary.reset_index(drop=False)
+     
+    dataSummary=dataSummary.rename(columns={'index':'Pct'})
+    dataSummary=dataSummary.sort_values(by=['Pct'],ascending=[True])
+    dataSummary=dataSummary.reset_index(drop=True)
+    
+    return dataSummary
+
+
+FinalDate='20190517'
+outsmall=getDetail(small['secID'] ,FinalDate)
+outmedium=getDetail(medium['secID'],FinalDate)
+outbig=getDetail(big['secID'],FinalDate)
+outblue=getDetail(blue['secID'],FinalDate)
+outsuper=getDetail(supernova['secID'],FinalDate)
+
+ 
+
+ppt={'state':[],'Percent':[],'range':[]}
+l1=len(outsmall)
+for i in range(l1):
+    ppt.get('state').append('small')
+    ppt.get('Percent').append(outsmall.ix[i]['Pct'])
+    ppt.get('range').append(outsmall.ix[i]['range'])
+
+l2=len(outmedium)
+for i in range (l2):
+    ppt.get('state').append('medium')
+    ppt.get('Percent').append(outmedium.ix[i]['Pct'])
+    ppt.get('range').append(outmedium.ix[i]['range'])
+    
+l3=len(outbig)
+for i in range(l3):
+    ppt.get('state').append('big')
+    ppt.get('Percent').append(outbig.ix[i]['Pct'])
+    ppt.get('range').append(outbig.ix[i]['range'])    
+    
+l4=len(outblue)
+for i in range(l4):
+    ppt.get('state').append('blue')
+    ppt.get('Percent').append(outblue.ix[i]['Pct'])
+    ppt.get('range').append(outblue.ix[i]['range'])  
+l5=len(outsuper)
+for i in range(l5):
+    ppt.get('state').append('super')
+    ppt.get('Percent').append(outsuper.ix[i]['Pct'])
+    ppt.get('range').append(outsuper.ix[i]['range'])  
+    
+ppt=(pd.DataFrame(ppt))
+
+pt=ppt.pivot_table( index='state',columns='Percent',values='range')
+# pt=pt.sort_index(axis=0,ascending=False)
+newOrder=['-0.1','-0.09','-0.08','-0.07','-0.06','-0.05','-0.04','-0.03','-0.02',\
+                '-0.01','0','0.01','0.02','0.03','0.04','0.05','0.06','0.07','0.08','0.09']
+newOrder2=['small','medium','big','blue','super']
+pt=pt.reindex_axis(newOrder2,axis=0)
+pt=pt.reindex_axis(newOrder,axis=1)
+plt.figure(figsize=((10,10)))
+sns.heatmap(pt )
