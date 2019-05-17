@@ -87,4 +87,4 @@ newOrder2=['small','medium','big','blue','super']
 pt=pt.reindex_axis(newOrder2,axis=0)
 pt=pt.reindex_axis(newOrder,axis=1)
 plt.figure(figsize=((10,10)))
-sns.heatmap(pt )
+sns.heatmap(pt ,annot=True,fmt='d')
