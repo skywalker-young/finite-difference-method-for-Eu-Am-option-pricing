@@ -44,7 +44,19 @@ for i in universe1:
 print(len(universe2))
 print(np.array(universe2))
 
+###########################分割
 
+FinalDate=['20190104','20190107','20190108','20190109','20190110','2019011']
+#FinalDate=['20190121','20190122','20190123','20190124','20190125','20190128','20190129']
+#FinalDate=['20190211','20190212','20190213','20190214','20190215','20190218','20190219','20190220']#0213这天出现金针菇
+# universe=pd.DataFrame(universeFilter(FinalDate))
+# universe.to_csv('universe.csv',index=False)
+
+universe=pd.read_csv('universe.csv',header=None)
+universe=(universe[1:][0])
+info_A=['secID','tradeDate','secShortName','netRateM','netRateL','netRateXL','mainRate','mainInflow']
+info_B=['secID','tradeDate','chgPct','turnoverRate','closePrice']
+info_C=['secID','tradeDate','finVal','finBuyVal','finRefundVal']
 
 for j in FinalDate:
     
