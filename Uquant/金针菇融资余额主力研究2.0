@@ -43,3 +43,27 @@ for i in universe1:
 
 print(len(universe2))
 print(np.array(universe2))
+
+
+
+for j in FinalDate:
+    
+    universe1=[]
+    for i in universe:
+    
+        b=DataAPI.MktEqudGet(secID=i,ticker=u"",tradeDate=j,beginDate=u"",endDate=u"",isOpen="",field=info_B,pandas="1")
+    #print (b.turnoverRate[0])
+        if b.turnoverRate[0]>0.04:
+            universe1.append(i)
+    universe2=[]
+    for i in universe1:
+        c=DataAPI.FstDetailGet(secID=i,ticker=u"",beginDate=j,endDate=j,field=info_C,pandas="1")
+        z_c=(np.array(c.finBuyVal)-np.array(c.finRefundVal))/10000.0
+    
+        a=DataAPI.MktEquFlowOrderGet(secID=i,ticker=u"",beginDate=j,endDate=j,field=info_A,pandas="1")
+        x_a=(np.array(a.mainInflow))/10000.0
+        ratio=z_c/x_a
+        if ratio>10 :
+            universe2.append(i)
+    print(len(universe2))  
+    print(np.array(universe2))
