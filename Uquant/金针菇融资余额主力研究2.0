@@ -34,7 +34,11 @@ info_C=['secID','tradeDate','finVal','finBuyVal','finRefundVal']
 for i in universe1:
     c=DataAPI.FstDetailGet(secID=i,ticker=u"",beginDate=FinalDate,endDate=FinalDate,field=info_C,pandas="1")
     z_c=(np.array(c.finBuyVal)-np.array(c.finRefundVal))/10000.0
-    if z_c>30:
+    info_A=['secID','tradeDate','secShortName','netRateM','netRateL','netRateXL','mainRate','mainInflow']
+    a=DataAPI.MktEquFlowOrderGet(secID=i,ticker=u"",beginDate=FinalDate,endDate=FinalDate,field=info_A,pandas="1")
+    x_a=(np.array(a.mainInflow))/10000.0
+    ratio=z_c/x_a
+    if ratio>30 :
         universe2.append(i)
 
 print(len(universe2))
