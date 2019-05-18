@@ -1,0 +1,37 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from math import log
+info_A=['secID','tradeDate','secShortName','netRateM','netRateL','netRateXL','mainRate','mainInflow']
+#mainRate 主力资金净流入占成交金额比重(主力=中单+大单+超大单)
+#netRateL 资金净流入占成交金额比重(大单)
+#netRateM 资金净流入占成交金额比重(中单)
+#netRateXL 资金净流入占成交金额比重超大单)
+BeginDate=u"20190103"
+FinalDate=u"20190517"
+a=DataAPI.MktEquFlowOrderGet(secID=u"",ticker=u"600446",beginDate=BeginDate,endDate=FinalDate,field=info_A,pandas="1")
+
+info_B=['secID','tradeDate','chgPct','turnoverRate','closePrice']
+b=DataAPI.MktEqudGet(secID=u"",ticker=u"600446",tradeDate=u"",beginDate=BeginDate,endDate=FinalDate,
+                     isOpen="",field=info_B,pandas="1")
+
+x_a=(np.array(a.mainInflow))/10000.0#主力净流入
+
+y_b=b.closePrice
+y2_b=b.turnoverRate
+info_C=['secID','tradeDate','finVal','finBuyVal','finRefundVal']
+#finVal 本日融资余额,显示到findalDate的前一天
+c=DataAPI.FstDetailGet(secID=u"",ticker=u"600446",beginDate=BeginDate,endDate=FinalDate,field=info_C,pandas="1")
+z_c=(np.array(c.finBuyVal)-np.array(c.finRefundVal))/10000.0
+
+ratio=z_c/x_a
+plt.figure(figsize=(10,10))
+plt.subplot(3,1,1)
+plt.plot(ratio)
+plt.subplot(3,1,2)
+plt.plot(y_b)
+plt.subplot(3,1,3)
+plt.plot(y2_b)
+plt.show()
+print(ratio)
+print(y2_b)
