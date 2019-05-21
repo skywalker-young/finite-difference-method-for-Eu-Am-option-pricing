@@ -16,14 +16,14 @@ b=DataAPI.MktEqudGet(secID=u"",ticker=u"600446",tradeDate=u"",beginDate=BeginDat
                      isOpen="",field=info_B,pandas="1")
 
 x_a=(np.array(a.mainInflow))/10000.0#主力净流入
-
+#数据是从BeginDate到FinalDate
 y_b=b.closePrice
 y2_b=b.turnoverRate
 info_C=['secID','tradeDate','finVal','finBuyVal','finRefundVal']
 #finVal 本日融资余额,显示到findalDate的前一天
 c=DataAPI.FstDetailGet(secID=u"",ticker=u"600446",beginDate=BeginDate,endDate=FinalDate,field=info_C,pandas="1")
-z_c=(np.array(c.finBuyVal)-np.array(c.finRefundVal))/10000.0
-
+z_c=(np.array(c.finBuyVal)-np.array(c.finRefundVal))/10000.0 #数据是从FinalDate到BeginDate
+z_c=z_c[::-1]
 ratio=z_c/x_a
 plt.figure(figsize=(10,10))
 plt.subplot(3,1,1)
