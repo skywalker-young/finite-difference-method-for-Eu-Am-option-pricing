@@ -1,0 +1,51 @@
+##真最终版本
+###扫描全市场换手率5%&融资净买入/主力净流入>30; 或暗示庄家把大单拆成小单买入。防止低吸阶段股价上天.换手率优先过滤.
+import pandas as pd
+import numpy as np
+from CAL import *
+cal=Calendar('China.SSE') 
+
+
+#FinalDate=['20190104','20190107','20190108','20190109','20190110','20190111']
+#FinalDate=['20190121','20190122','20190123','20190124','20190125','20190128','20190129']
+#FinalDate=['20190211','20190212','20190213','20190214','20190215','20190218','20190219','20190220']#0213这天出现金针菇
+#FinalDate=['20190506','20190507','20190508','20190509','20190510','20190513','20190514','20190515']
+FinalDate=['20190510','20190513','20190514']
+# universe=pd.DataFrame(universeFilter(FinalDate))
+# universe.to_csv('universe.csv',index=False)
+
+universe=pd.read_csv('universe.csv',header=None)
+universe=(universe[1:][0])
+info_A=['secID','tradeDate','secShortName','netRateM','netRateL','netRateXL','mainRate','mainInflow']
+info_B=['secID','tradeDate','chgPct','turnoverRate','closePrice']
+info_C=['secID','tradeDate','finVal','finBuyVal','finRefundVal']
+
+for j in FinalDate:
+    Final={'ID':[],'turnoverR':[]}
+    universe1=[]
+    for i in universe:
+    
+        b=DataAPI.MktEqudGet(secID=i,ticker=u"",tradeDate=j,beginDate=u"",endDate=u"",isOpen="",field=info_B,pandas="1")
+    #print (b.turnoverRate[0])
+        if b.turnoverRate[0]>0.05:
+            universe1.append(i)
+    universe2=[]
+    for i in universe1:
+        c=DataAPI.FstDetailGet(secID=i,ticker=u"",beginDate=j,endDate=j,field=info_C,pandas="1")
+        z_c=(np.array(c.finBuyVal)-np.array(c.finRefundVal))/10000.0
+        z_c=z_c[::-1]
+        a=DataAPI.MktEquFlowOrderGet(secID=i,ticker=u"",beginDate=j,endDate=j,field=info_A,pandas="1")
+        x_a=(np.array(a.mainInflow))/10000.0
+        ratio=z_c/x_a
+        if ratio>=3 and x_a>0 :#防止负负得正
+            universe2.append(i)
+    # print(len(universe2))  
+    # print(np.array(universe2))
+#根据选股结果，买低开的比较好吧，换手率>10%,很强劲的！20190522感想
+    for i in universe2:
+        ssoorrtt=DataAPI.MktEqudGet(secID=i,ticker=u"",tradeDate=j,beginDate=u"",endDate=u"",isOpen="",field=info_B,pandas="1")
+        Final.get('ID').append(i)
+        Final.get('turnoverR').append(ssoorrtt.turnoverRate[0])
+    Final=pd.DataFrame(Final)
+    Final=Final.sort_values(by=['turnoverR'],ascending=[False])
+    print(Final)
